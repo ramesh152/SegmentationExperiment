@@ -1,2 +1,2 @@
 # SegmentationExperiment
-HippocampusSegmentationusing UNet
+Hippocampus Segmentation Using UNet
