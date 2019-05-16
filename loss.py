@@ -57,9 +57,9 @@ def calc_loss(pred, target, metrics, bce_weight=0.5):
     sdice = soft_dice(pred,target)
 
     #loss = bce * bce_weight + dice * (1 - bce_weight)
-    loss = bce 
+    #loss = bce 
 
-    #loss = bce + sdice
+    loss = bce + sdice
 
     #metrics['bce'] += bce.data.cpu().numpy() * target.size(0)
     #metrics['dice'] += dice.data.cpu().numpy() * target.size(0)

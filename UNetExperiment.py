@@ -29,7 +29,7 @@ from NucleusDataset import NucleusDataset
 from trixi.experiment.pytorchexperiment import PytorchExperiment
 from torchvision import transforms
 from utils import tensor_to_numpy,ToTensor,Normalize,Rescale,create_splits
-from loss import calc_loss
+from loss import calc_loss,soft_dice
 
 
 class UNetExperiment(PytorchExperiment):
@@ -138,6 +138,7 @@ class UNetExperiment(PytorchExperiment):
         data = None
         batch_counter = 0
         metrics = defaultdict(float)
+        #running_loss = 0.0
         for batch_idx, (images, masks) in enumerate(self.train_data_loader):
             data, target = images.to(self.device), masks.to(self.device)
 
@@ -150,15 +151,18 @@ class UNetExperiment(PytorchExperiment):
             #We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
             #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
             #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
-            #loss = F.binary_cross_entropy(pred, masks)
+            loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
 
-            loss,_ = calc_loss(pred, target, metrics)
+            #loss,_ = calc_loss(pred, target, metrics)
             loss.backward()
             self.optimizer.step()
 
+            #running_loss+=loss.item()
+            #epoch_loss = running_loss/len(train_data_loader)
+
             # Some logging and plotting
             if (batch_counter % self.config.plot_freq) == 0:
-                self.elog.print('Epoch: {0} Loss: {1:.4f}'.format(self._epoch_idx, loss))
+                self.elog.print('Epoch: {0} Loss: {1:.4f}'.format(self._epoch_idx, loss.item()))
 
                 #self.add_result(value=loss.item(), name='Train_Loss', tag='Loss', counter=epoch + (batch_counter / self.train_data_loader.num_batches))
                 self.add_result(value=loss.item(), name='Train_Loss', tag='Loss', counter=epoch)  
@@ -189,10 +193,13 @@ class UNetExperiment(PytorchExperiment):
                 # loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
                 # loss = F.binary_cross_entropy(pred, masks)
                 
-                loss,dice = calc_loss(pred, target, metrics)
+                #loss,dice = calc_loss(pred, target, metrics)
+                acc = soft_dice(pred,target) 
+                acc_list.append(acc.item())
+
+                loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
                 loss_list.append(loss.item())
-                acc = -1*dice 
-                acc_list.append(acc)
+                
         assert data is not None, 'data is None. Please check if your dataloader works properly'
         self.scheduler.step(np.mean(loss_list))
 

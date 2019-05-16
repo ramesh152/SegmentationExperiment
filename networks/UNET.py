@@ -96,6 +96,6 @@ class UNet(nn.Module):
         conv9 = F.relu(self.conv9_1(up9))
         conv9 = F.relu(self.conv9_2(conv9))
 
-        return self.conv10(conv9)
+        #return self.conv10(conv9)
         #return torch.sigmoid(self.conv10(conv9))  #old
-        #return F.sigmoid(self.conv10(conv9))
+        return F.sigmoid(self.conv10(conv9))
