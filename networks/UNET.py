@@ -95,6 +95,7 @@ class UNet(nn.Module):
         up9 = torch.cat((self.conv8_t(conv8), conv1), dim=1)
         conv9 = F.relu(self.conv9_1(up9))
         conv9 = F.relu(self.conv9_2(conv9))
-        
-        return torch.sigmoid(self.conv10(conv9))
+
+        return self.conv10(conv9)
+        #return torch.sigmoid(self.conv10(conv9))  #old
         #return F.sigmoid(self.conv10(conv9))

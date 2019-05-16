@@ -40,8 +40,6 @@ class NucleusDataset(Dataset):
         if not self._check_task_exists():
             raise RuntimeError("Task does not exist")
             
-        #if not self._check_exists():
-           # raise RuntimeError("Dataset not found.")
 
         if self.mode=="train":
 

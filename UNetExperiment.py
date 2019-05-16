@@ -18,7 +18,7 @@
 import os
 import pickle
 from collections import OrderedDict
-
+from collections import defaultdict
 import numpy as np
 import torch
 import torch.optim as optim
@@ -26,13 +26,10 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn.functional as F
 from networks.UNET import UNet
 from NucleusDataset import NucleusDataset
-#from datasets.two_dim.NumpyDataLoader import NumpyDataSet
 from trixi.experiment.pytorchexperiment import PytorchExperiment
 from torchvision import transforms
 from utils import tensor_to_numpy,ToTensor,Normalize,Rescale,create_splits
-
-#from networks.RecursiveUNet import UNet
-#from loss_functions.dice_loss import SoftDiceLoss
+from loss import calc_loss
 
 
 class UNetExperiment(PytorchExperiment):
@@ -121,12 +118,6 @@ class UNetExperiment(PytorchExperiment):
         self.model = UNet()
         self.model.to(self.device)
 
-        # We use a combination of DICE-loss and CE-Loss in this example.
-        # This proved good in the medical segmentation decathlon.
-        #self.dice_loss = SoftDiceLoss(batch_dice=True)  # Softmax for DICE Loss!
-
-        #self.ce_loss = torch.nn.CrossEntropyLoss()  # No softmax for CE Loss -> is implemented in torch!
-
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
         self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
 
@@ -146,25 +137,22 @@ class UNetExperiment(PytorchExperiment):
 
         data = None
         batch_counter = 0
+        metrics = defaultdict(float)
         for batch_idx, (images, masks) in enumerate(self.train_data_loader):
             data, target = images.to(self.device), masks.to(self.device)
-           #for data_batch in self.train_data_loader:
 
             self.optimizer.zero_grad()
 
-            # Shape of data_batch = [1, b, c, w, h]
-            # Desired shape = [b, c, w, h]
-            # Move data and target to the GPU
-            #data = data_batch['data'][0].float().to(self.device)
-            #target = data_batch['seg'][0].long().to(self.device)
-
-            print("data  shape :",data.shape, "target shape :",target.shape)
+            #print("data  shape :",data.shape, "target shape :",target.shape)
             pred = self.model(data)
-            #pred_softmax = F.softmax(pred, dim=1)  # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
+
+            #pred_softmax = F.softmax(pred, dim=1) 
+            #We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
             #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
             #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
-            loss = F.binary_cross_entropy(pred, masks)
+            #loss = F.binary_cross_entropy(pred, masks)
 
+            loss,_ = calc_loss(pred, target, metrics)
             loss.backward()
             self.optimizer.step()
 
@@ -189,26 +177,29 @@ class UNetExperiment(PytorchExperiment):
 
         data = None
         loss_list = []
-
+        acc_list = []
+        metrics = defaultdict(float)
         with torch.no_grad():
-            #for data_batch in self.val_data_loader:
-                #data = data_batch['data'][0].float().to(self.device)
-                #target = data_batch['seg'][0].long().to(self.device)
              for batch_idx, (images, masks) in enumerate(self.val_data_loader):
                 data, target = images.to(self.device), masks.to(self.device)
                 pred = self.model(data)
-                pred_softmax = F.softmax(pred, dim=1)  # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
-                #Ramesh check if soft max is needed
-                #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
-                loss = F.binary_cross_entropy(pred, masks)
+                # pred_softmax = F.softmax(pred, dim=1)  
+                # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
+                # Ramesh check if soft max is needed
+                # loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
+                # loss = F.binary_cross_entropy(pred, masks)
+                
+                loss,dice = calc_loss(pred, target, metrics)
                 loss_list.append(loss.item())
-
+                acc = -1*dice 
+                acc_list.append(acc)
         assert data is not None, 'data is None. Please check if your dataloader works properly'
         self.scheduler.step(np.mean(loss_list))
 
-        self.elog.print('Epoch: %d Loss: %.4f' % (self._epoch_idx, np.mean(loss_list)))
+        self.elog.print('Epoch: %d Mean Loss: %.4f Mean Dice :' % (self._epoch_idx, np.mean(loss_list)),np.mean(acc_list))
 
         self.add_result(value=np.mean(loss_list), name='Val_Loss', tag='Loss', counter=epoch+1)
+        self.add_result(value=np.mean(acc_list), name='Val_Mean_Accuracy', tag='Accuracy', counter=epoch+1)
 
         self.clog.show_image_grid(data.float().cpu(), name="data_val", normalize=True, scale_each=True, n_iter=epoch)
         self.clog.show_image_grid(target.float().cpu(), name="mask_val", title="Mask", n_iter=epoch)

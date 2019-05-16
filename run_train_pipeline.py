@@ -22,16 +22,11 @@ import os
 from os.path import exists
 
 from Config_unet import get_config
-#from datasets.example_dataset.create_splits import create_splits
-#from datasets.example_dataset.download_dataset import download_dataset
-#from datasets.example_dataset.preprocessing import preprocess_data
 from UNetExperiment import UNetExperiment
 from utils import create_splits
 
 if __name__ == "__main__":
     c = get_config()
-
-    #download_dataset(dest_path=c.data_root_dir, dataset=c.dataset_name, id=c.google_drive_id)
 
     if not exists(os.path.join(os.path.join(c.data_root_dir, c.dataset_name), 'preprocessed')):
         print('Preprocessing data. [STARTED]')
@@ -46,7 +41,6 @@ if __name__ == "__main__":
 
     exp = UNetExperiment(config=c, name=c.name, n_epochs=c.n_epochs,
                          seed=42, append_rnd_to_name=c.append_rnd_string, globs=globals(),
-                         # visdomlogger_kwargs={"auto_start": c.start_visdom},
                          loggers={
                              "visdom": ("visdom", {"auto_start": c.start_visdom})
                          }
