@@ -13,10 +13,6 @@ import pickle
 
 import random
 from scipy import ndarray
-import skimage as sk
-from skimage import transform
-from skimage import util
-
 
 def tensor_to_numpy(tensor):
     t_numpy = tensor.cpu().numpy()
