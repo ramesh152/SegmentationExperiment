@@ -44,14 +44,14 @@ class NucleusDataset(Dataset):
            # raise RuntimeError("Dataset not found.")
 
         if self.mode=="train":
-            print("root_dir :",str(root_dir))
+
             #self.image_names = os.listdir(os.path.join(self.root_dir, "train",dataDir))
-            print("train image_names :",self.image_names)
+            #print("train image_names :",self.image_names)
             self.train_data = []
             self.train_labels = []
             for image in self.image_names : 
                 train_img = cv2.imread(osp.join(self.root_dir,self.taskname,dataDir,image+suffix))
-                print("image path: ",osp.join(self.root_dir,self.taskname,dataDir,image+suffix))
+                #print("image path: ",osp.join(self.root_dir,self.taskname,dataDir,image+suffix))
                 self.train_data.append(train_img)
                 
                 target_img = np.zeros(train_img.shape[:2], dtype=np.uint8)
@@ -64,7 +64,7 @@ class NucleusDataset(Dataset):
             self.val_data = []
             self.val_labels = []
             for image in self.image_names:  
-                print(" Val image_names :",self.image_names)
+                #print(" Val image_names :",self.image_names)
                 val_img = cv2.imread(osp.join(self.root_dir,self.taskname,dataDir,image+suffix))
                 self.val_data.append(val_img)
                 
@@ -76,7 +76,7 @@ class NucleusDataset(Dataset):
             self.test_data = []
             self.test_labels = []
             for image in self.image_names:  
-                print(" Test image_names :",self.image_names)
+                #print(" Test image_names :",self.image_names)
                 test_img = cv2.imread(osp.join(self.root_dir,taskname,dataDir,image+suffix))
                 self.test_data.append(test_img)
                 

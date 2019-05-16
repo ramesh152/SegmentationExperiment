@@ -29,7 +29,7 @@ from NucleusDataset import NucleusDataset
 #from datasets.two_dim.NumpyDataLoader import NumpyDataSet
 from trixi.experiment.pytorchexperiment import PytorchExperiment
 from torchvision import transforms
-from utils import tensor_to_numpy,ToTensor,Normalize,Rescale
+from utils import tensor_to_numpy,ToTensor,Normalize,Rescale,create_splits
 
 #from networks.RecursiveUNet import UNet
 #from loss_functions.dice_loss import SoftDiceLoss
@@ -58,11 +58,14 @@ class UNetExperiment(PytorchExperiment):
         pkl_dir = self.config.split_dir
         with open(os.path.join(pkl_dir, "splits.pkl"), 'rb') as f:
             splits = pickle.load(f)
-
+  
         tr_keys = splits[self.config.fold]['train']
         val_keys = splits[self.config.fold]['val']
         test_keys = splits[self.config.fold]['test']
-        
+        print("pkl_dir: ",pkl_dir) 
+        print("tr_keys: ",tr_keys)
+        print("val_keys: ",val_keys)
+        print("test_keys: ",test_keys)
         self.device = torch.device(self.config.device if torch.cuda.is_available() else "cpu")
         task = self.config.dataset_name
         self.train_data_loader = torch.utils.data.DataLoader(
@@ -122,7 +125,7 @@ class UNetExperiment(PytorchExperiment):
         # This proved good in the medical segmentation decathlon.
         #self.dice_loss = SoftDiceLoss(batch_dice=True)  # Softmax for DICE Loss!
 
-        self.ce_loss = torch.nn.CrossEntropyLoss()  # No softmax for CE Loss -> is implemented in torch!
+        #self.ce_loss = torch.nn.CrossEntropyLoss()  # No softmax for CE Loss -> is implemented in torch!
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
         self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
@@ -157,8 +160,8 @@ class UNetExperiment(PytorchExperiment):
 
             print("data  shape :",data.shape, "target shape :",target.shape)
             pred = self.model(data)
-            pred_softmax = F.softmax(pred, dim=1)  # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
-            print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
+            #pred_softmax = F.softmax(pred, dim=1)  # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
+            #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
             #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
             loss = F.binary_cross_entropy(pred, masks)
 

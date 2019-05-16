@@ -9,6 +9,13 @@ import numpy as np
 import cv2
 
 import os.path as osp
+import pickle
+
+import random
+from scipy import ndarray
+import skimage as sk
+from skimage import transform
+from skimage import util
 
 
 def tensor_to_numpy(tensor):
@@ -33,6 +40,12 @@ class Normalize:
         image = image.astype(np.float32) / 255
         return image
 
+class Horizontal_flip:
+    def __call__(self, image):
+        # horizontal flip doesn't need skimage, it's easy as flipping the image array of pixels !
+        image = image[:, ::-1]
+        return image
+
 class Rescale:
     def __init__(self, output_size):
         assert isinstance(output_size, (int, tuple))
@@ -40,4 +53,51 @@ class Rescale:
 
     def __call__(self, image):
         return cv2.resize(image, (self.output_size, self.output_size), cv2.INTER_AREA)
+
+def create_splits(output_dir, image_dir):
+    png_files = subfiles(image_dir, suffix=".png", join=False)
+
+    trainset_size = len(png_files)*60//100
+    valset_size = len(png_files)*30//100
+    testset_size = len(png_files)*10//100
+
+    splits = []
+    for split in range(0, 5):
+        image_list = png_files.copy()
+        trainset = []
+        valset = []
+        testset = []
+        for i in range(0, trainset_size):
+            patient = np.random.choice(image_list)
+            image_list.remove(patient)
+            trainset.append(patient[:-4])
+        for i in range(0, valset_size):
+            patient = np.random.choice(image_list)
+            image_list.remove(patient)
+            valset.append(patient[:-4])
+        for i in range(0, testset_size):
+            patient = np.random.choice(image_list)
+            image_list.remove(patient)
+            testset.append(patient[:-4])
+        split_dict = dict()
+        split_dict['train'] = trainset
+        split_dict['val'] = valset
+        split_dict['test'] = testset
+
+        splits.append(split_dict)
+
+    with open(os.path.join(output_dir, 'splits.pkl'), 'wb') as f:
+        pickle.dump(splits, f)
+
+def subfiles(folder, join=True, prefix=None, suffix=None, sort=True):
+    if join:
+        l = os.path.join
+    else:
+        l = lambda x, y: y
+    res = [l(folder, i) for i in os.listdir(folder) if os.path.isfile(os.path.join(folder, i))
+            and (prefix is None or i.startswith(prefix))
+            and (suffix is None or i.endswith(suffix))]
+    if sort:
+        res.sort()
+    return res
 
