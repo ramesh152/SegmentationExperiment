@@ -25,8 +25,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn.functional as F
 from networks.UNET import UNet
-#from NucleusDataset import NucleusDataset
-from ImageDataSet import NucleusDataset
+from NucleusDataset import NucleusDataset
 from trixi.experiment.pytorchexperiment import PytorchExperiment
 from torchvision import transforms
 from utils import tensor_to_numpy,ToTensor,Normalize,Rescale,create_splits
@@ -66,7 +65,6 @@ class UNetExperiment(PytorchExperiment):
         print("test_keys: ",test_keys)
         self.device = torch.device(self.config.device if torch.cuda.is_available() else "cpu")
         task = self.config.dataset_name
-#                               MedImageDataSet
         self.train_data_loader = torch.utils.data.DataLoader(
         NucleusDataset(self.config.data_root_dir, train=True,
                        transform=transforms.Compose([
