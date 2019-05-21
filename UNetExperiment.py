@@ -21,11 +21,13 @@ from collections import OrderedDict
 from collections import defaultdict
 import numpy as np
 import torch
+import torchvision.transforms as TF
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn.functional as F
-from networks.UNET import UNet
+#from networks.UNET import UNet
 #from NucleusDataset import NucleusDataset
+from networks.RecursiveUNet import UNet
 from ImageDataSet import NucleusDataset
 from trixi.experiment.pytorchexperiment import PytorchExperiment
 from torchvision import transforms
@@ -66,7 +68,6 @@ class UNetExperiment(PytorchExperiment):
         print("test_keys: ",test_keys)
         self.device = torch.device(self.config.device if torch.cuda.is_available() else "cpu")
         task = self.config.dataset_name
-#                               MedImageDataSet
         self.train_data_loader = torch.utils.data.DataLoader(
         NucleusDataset(self.config.data_root_dir, train=True,
                        transform=transforms.Compose([
@@ -89,11 +90,13 @@ class UNetExperiment(PytorchExperiment):
                    				    transform=transforms.Compose([
                       						     Normalize(),
                           					     Rescale(self.config.patch_size),
-                          					     ToTensor() ]),
+                          					     ToTensor() 
+                                                    ]),
                                                     target_transform=transforms.Compose([
                                                                      Normalize(),
                                                                      Rescale(self.config.patch_size),
-                                                                     ToTensor()]),
+                                                                     ToTensor()
+                                                    ]),
                       mode ="val",
                       keys = val_keys,
                       taskname = self.config.dataset_name),
@@ -116,8 +119,8 @@ class UNetExperiment(PytorchExperiment):
                       taskname = self.config.dataset_name),
         batch_size=self.config.batch_size, shuffle=True)
 
-        #self.model = UNet(num_classes=self.config.num_classes, in_channels=self.config.in_channels)
-        self.model = UNet()
+        self.model = UNet(num_classes=self.config.num_classes, in_channels=self.config.in_channels)
+        #self.model = UNet()
         self.model.to(self.device)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
@@ -148,7 +151,7 @@ class UNetExperiment(PytorchExperiment):
 
             #print("data  shape :",data.shape, "target shape :",target.shape)
             pred = self.model(data)
-
+            pred = torch.sigmoid(pred)
             #pred_softmax = F.softmax(pred, dim=1) 
             #We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
             #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
@@ -170,8 +173,8 @@ class UNetExperiment(PytorchExperiment):
                 self.add_result(value=loss.item(), name='Train_Loss', tag='Loss', counter=epoch)  
                 self.clog.show_image_grid(data.float().cpu(), name="data", normalize=True, scale_each=True, n_iter=epoch)
                 self.clog.show_image_grid(target.float().cpu(), name="mask", title="Mask", n_iter=epoch)
-                self.clog.show_image_grid(torch.argmax(pred.cpu(), dim=1, keepdim=True), name="unt_argmax", title="Unet", n_iter=epoch)
-                #self.clog.show_image_grid(pred.cpu()[:, 1:2, ], name="unt", normalize=True, scale_each=True, n_iter=epoch)
+                #self.clog.show_image_grid(torch.argmax(pred.cpu(), dim=1, keepdim=True), name="unt_argmax", title="Unet", n_iter=epoch)
+                self.clog.show_image_grid(pred.cpu(), name="unt", normalize=True, scale_each=True, n_iter=epoch)
 
             batch_counter += 1
 
@@ -189,6 +192,7 @@ class UNetExperiment(PytorchExperiment):
              for batch_idx, (images, masks) in enumerate(self.val_data_loader):
                 data, target = images.to(self.device), masks.to(self.device)
                 pred = self.model(data)
+                pred = torch.sigmoid(pred) 
                 # pred_softmax = F.softmax(pred, dim=1)  
                 # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
                 # Ramesh check if soft max is needed
@@ -196,7 +200,7 @@ class UNetExperiment(PytorchExperiment):
                 # loss = F.binary_cross_entropy(pred, masks)
                 
                 #loss,dice = calc_loss(pred, target, metrics)
-                acc = soft_dice(pred,target) 
+                acc = (-1)*soft_dice(pred,target) 
                 acc_list.append(acc.item())
 
                 loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
@@ -213,7 +217,7 @@ class UNetExperiment(PytorchExperiment):
         self.clog.show_image_grid(data.float().cpu(), name="data_val", normalize=True, scale_each=True, n_iter=epoch)
         self.clog.show_image_grid(target.float().cpu(), name="mask_val", title="Mask", n_iter=epoch)
         self.clog.show_image_grid(torch.argmax(pred.data.cpu(), dim=1, keepdim=True), name="unt_argmax_val", title="Unet", n_iter=epoch)
-        #self.clog.show_image_grid(pred.data.cpu()[:, 1:2, ], name="unt_val", normalize=True, scale_each=True, n_iter=epoch)
+        self.clog.show_image_grid(pred.data.cpu(), name="unt_val", normalize=True, scale_each=True, n_iter=epoch)
 
     def test(self):
         # TODO

@@ -27,11 +27,13 @@ def load_data_set(root_dir,taskname,mode="train",keys=None):
    img_labels = []
 
    for image in image_names : 
-        img = cv2.imread(osp.join(root_dir,taskname,dataDir,image+suffix))
+        train_img_ = cv2.imread(osp.join(root_dir,taskname,dataDir,image+suffix),0)
         #print("image path: ",osp.join(root_dir,taskname,dataDir,image+suffix))
-        img_data.append(img)
+        train_img = np.zeros(train_img_.shape[:2], dtype=np.uint8) 
+        train_img = np.maximum(train_img, train_img_)
+        img_data.append(train_img)
                 
-        target_img = np.zeros(img.shape[:2], dtype=np.uint8)
+        target_img = np.zeros(train_img_.shape[:2], dtype=np.uint8)
         target_img_ = cv2.imread(osp.join(root_dir,taskname,maskDir,image+suffix),0)
         target_img = np.maximum(target_img, target_img_)
         img_labels.append(target_img)

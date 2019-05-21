@@ -6,17 +6,18 @@ from trixi.util import Config
 def get_config():
     # Set your own path, if needed.
     #data_root_dir = os.path.abspath('data')  # The path where the downloaded dataset is stored.
-    data_root_dir = "/home/ramesh/Desktop/WS/Implementation/experiment/Data/Filtereddataset"
-    #taskName = "Task01_Hippocampus"
-    taskName = "Task09_Spleen"
+    #data_root_dir = "/home/ramesh/Desktop/WS/Implementation/experiment/Data/Filtereddataset"
+    data_root_dir ="/home/ramesh/Desktop/IIITB/experiment/data/FilteredDataSet"
+    taskName = "Task01_Hippocampus"
+    #taskName = "Task09_Spleen"
     c = Config(
         update_from_argv=True,
         # Train parameters
-        #num_classes=3,
-        #in_channels=1,
-        batch_size=2,
+        num_classes=1,
+        in_channels=1,
+        batch_size=6,
         patch_size=64,
-        n_epochs=5,
+        n_epochs=50,
         learning_rate=0.0002,
         fold=0,  # The 'splits.pkl' may contain multiple folds. Here we choose which one we want to use.
 
