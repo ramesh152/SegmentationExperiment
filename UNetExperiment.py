@@ -152,7 +152,7 @@ class UNetExperiment(PytorchExperiment):
             #print("data  shape :",data.shape, "target shape :",target.shape)
             pred = self.model(data)
             pred = torch.sigmoid(pred)
-            #pred_softmax = F.softmax(pred, dim=1) 
+            #pred = F.softmax(pred, dim=1) 
             #We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
             #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
             #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
@@ -181,7 +181,7 @@ class UNetExperiment(PytorchExperiment):
         assert data is not None, 'data is None. Please check if your dataloader works properly'
 
     def validate(self, epoch):
-        self.elog.print('VALIDATE')
+        self.elog.print('-------------VALIDATE-------------')
         self.model.eval()
 
         data = None
@@ -193,7 +193,7 @@ class UNetExperiment(PytorchExperiment):
                 data, target = images.to(self.device), masks.to(self.device)
                 pred = self.model(data)
                 pred = torch.sigmoid(pred) 
-                # pred_softmax = F.softmax(pred, dim=1)  
+                #pred = F.softmax(pred, dim=1)  
                 # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
                 # Ramesh check if soft max is needed
                 # loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
@@ -221,4 +221,42 @@ class UNetExperiment(PytorchExperiment):
 
     def test(self):
         # TODO
-        print('TODO: Implement your test() method here')
+        print(' In test() method here')
+        self.elog.print('----------Test-------------')
+        self.model.eval()
+        trial = 10
+        data = None
+        loss_list = []
+        acc_list = []
+        metrics = defaultdict(float)
+        with torch.no_grad():
+             for batch_idx, (images, masks) in enumerate(self.test_data_loader):
+                data, target = images.to(self.device), masks.to(self.device)
+                pred = self.model(data)
+                pred = torch.sigmoid(pred) 
+                #pred = F.softmax(pred, dim=1)  
+                # We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
+                # Ramesh check if soft max is needed
+                # loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
+                # loss = F.binary_cross_entropy(pred, masks)
+                
+                #loss,dice = calc_loss(pred, target, metrics)
+                acc = (-1)*soft_dice(pred,target) 
+                acc_list.append(acc.item())
+
+                loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+                loss_list.append(loss.item())
+                assert data is not None, 'data is None. Please check if your dataloader works properly'
+      		#self.scheduler.step(np.mean(loss_list))
+                self.add_result(value=loss.item(), name='Test_Loss', tag='Test_Loss', counter=trial+1)
+                self.add_result(value=acc.item(), name='Test_Mean_Accuracy', tag='Test_Accuracy', counter=trial+1)
+
+                self.clog.show_image_grid(data.float().cpu(), name="data_test", normalize=True, scale_each=True, n_iter=trial)
+
+                self.clog.show_image_grid(target.float().cpu(), name="mask_test", title="Mask", n_iter=trial)
+
+                self.clog.show_image_grid(torch.argmax(pred.data.cpu(), dim=1, keepdim=True), name="unt_argmax_test", title="Unet", n_iter=trial)
+
+                self.clog.show_image_grid(pred.data.cpu(), name="unt_test", normalize=True, scale_each=True, n_iter=trial)
+           
+             self.elog.print('Test Mean Loss: %.4f Test Mean Dice :' % (np.mean(loss_list)),np.mean(acc_list))

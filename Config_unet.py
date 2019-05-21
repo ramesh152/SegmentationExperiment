@@ -17,7 +17,7 @@ def get_config():
         in_channels=1,
         batch_size=6,
         patch_size=64,
-        n_epochs=50,
+        n_epochs=5,
         learning_rate=0.0002,
         fold=0,  # The 'splits.pkl' may contain multiple folds. Here we choose which one we want to use.
 
@@ -30,8 +30,8 @@ def get_config():
         start_visdom=True,
 
         do_instancenorm=True,  # Defines whether or not the UNet does a instance normalization in the contracting path
-        do_load_checkpoint=False,
-        checkpoint_dir='',
+        do_load_checkpoint=True,
+        checkpoint_dir='/home/ramesh/Desktop/IIITB/experiment/SegmentationExperiment/output_experiment/20190521-212008_Segmentation_Experiment_Unet/checkpoint/checkpoint_last',
 
         # Adapt to your own path, if needed.
         #google_drive_id='1RzPB1_bqzQhlWvU-YGvZzhx2omcDh38C',
