@@ -7,7 +7,7 @@ def get_config():
     # Set your own path, if needed.
     #data_root_dir = os.path.abspath('data')  # The path where the downloaded dataset is stored.
     #data_root_dir = "/home/ramesh/Desktop/WS/Implementation/experiment/Data/Filtereddataset"
-    data_root_dir ="/home/ramesh/Desktop/IIITB/experiment/data/FilteredDataSet"
+    data_root_dir ="/home/ramesh/Desktop/WS/Implementation/data/FilteredDataSet/small"
     taskName = "Task01_Hippocampus"
     #taskName = "Task09_Spleen"
     c = Config(
@@ -30,8 +30,8 @@ def get_config():
         start_visdom=True,
 
         do_instancenorm=True,  # Defines whether or not the UNet does a instance normalization in the contracting path
-        do_load_checkpoint=True,
-        checkpoint_dir='/home/ramesh/Desktop/IIITB/experiment/SegmentationExperiment/output_experiment/20190521-212008_Segmentation_Experiment_Unet/checkpoint/checkpoint_last',
+        do_load_checkpoint=False,
+        checkpoint_dir='',
 
         # Adapt to your own path, if needed.
         #google_drive_id='1RzPB1_bqzQhlWvU-YGvZzhx2omcDh38C',
