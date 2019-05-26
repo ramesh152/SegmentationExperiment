@@ -128,7 +128,7 @@ class UNetExperiment(PytorchExperiment):
         self.model = UNet(num_classes=self.config.num_classes, in_channels=self.config.in_channels)
         #self.model = UNet()
         self.model.to(self.device)
-
+        self.bce_weight = 0.5 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
         self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
 
@@ -162,8 +162,8 @@ class UNetExperiment(PytorchExperiment):
             #We calculate a softmax, because our SoftDiceLoss expects that as an input. The CE-Loss does the softmax internally.
             #print("pred_softmax  shape :",pred_softmax.shape, "target shape :",target.shape)
             #loss = self.dice_loss(pred_softmax, target.squeeze()) + self.ce_loss(pred, target.squeeze())
-            loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
-
+            #loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+            loss = self.bce_weight*F.binary_cross_entropy(pred, target) + (1-self.bce_weight)*soft_dice(pred,target)
             #loss,_ = calc_loss(pred, target, metrics)
             loss.backward()
             self.optimizer.step()
@@ -209,7 +209,8 @@ class UNetExperiment(PytorchExperiment):
                 acc = (-1)*soft_dice(pred,target) 
                 acc_list.append(acc.item())
 
-                loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+                #loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+                loss = self.bce_weight*F.binary_cross_entropy(pred, target) + (1-self.bce_weight)*soft_dice(pred,target)
                 loss_list.append(loss.item())
                 
         assert data is not None, 'data is None. Please check if your dataloader works properly'
@@ -250,7 +251,8 @@ class UNetExperiment(PytorchExperiment):
                 acc = (-1)*soft_dice(pred,target) 
                 acc_list.append(acc.item())
 
-                loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+                #loss = F.binary_cross_entropy(pred, target) + soft_dice(pred,target)
+                loss = self.bce_weight*F.binary_cross_entropy(pred, target) + (1-self.bce_weight)*soft_dice(pred,target)
                 loss_list.append(loss.item())
                 assert data is not None, 'data is None. Please check if your dataloader works properly'
       		#self.scheduler.step(np.mean(loss_list))

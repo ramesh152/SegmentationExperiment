@@ -21,8 +21,8 @@ matplotlib.use('Agg')
 import os
 from os.path import exists
 
-from Config_unet import get_config
-from UNetExperiment import UNetExperiment
+from Config_unet_nuclii import get_config
+from UNetExperiment_nuclii import UNetExperiment
 from utils import create_splits
 
 if __name__ == "__main__":

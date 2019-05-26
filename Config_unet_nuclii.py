@@ -9,7 +9,7 @@ def get_config():
     #data_root_dir = "/home/ramesh/Desktop/WS/Implementation/experiment/Data/Filtereddataset"
     #data_root_dir ="/home/ramesh/Desktop/IIITB/experiment/data/FilteredDataSet"
     data_root_dir = "/home/ramesh/Desktop/IIITB/experiment/data/NucliiData"
-    taskName = "Task01_Hippocampus"
+    taskName = "Nuclii Segmentation"
     #taskName = "Task09_Spleen"
     c = Config(
         update_from_argv=True,
@@ -18,8 +18,8 @@ def get_config():
         in_channels=1,
         batch_size=6,
         patch_size=64,
-        n_epochs=25,
-        learning_rate=0.0002,
+        n_epochs=50,
+        learning_rate=0.00001,
         fold=0,  # The 'splits.pkl' may contain multiple folds. Here we choose which one we want to use.
 
         device="cuda",  # 'cuda' is the default CUDA device, you can use also 'cpu'. For more information, see https://pytorch.org/docs/stable/notes/cuda.html
